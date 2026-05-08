@@ -10,6 +10,21 @@ const PALETTE = [
 
 const ERASER = '#ffffff'
 
+const COLOR_NAMES: Record<string, string> = {
+  '#ef4444': 'czerwony',
+  '#f97316': 'pomarańczowy',
+  '#eab308': 'żółty',
+  '#22c55e': 'zielony',
+  '#3b82f6': 'niebieski',
+  '#8b5cf6': 'fioletowy',
+  '#ec4899': 'różowy',
+  '#14b8a6': 'turkusowy',
+  '#f59e0b': 'bursztynowy',
+  '#6366f1': 'indygo',
+  '#78716c': 'szary',
+  '#000000': 'czarny',
+}
+
 function makeGrid(rows: number, cols: number) {
   return Array(rows * cols).fill(ERASER)
 }
@@ -159,6 +174,24 @@ export default function ColorGrid() {
           </>
         ))}
       </div>
+      {cells.some(c => c !== ERASER) && (
+        <div className="text-sm text-gray-700 flex flex-wrap gap-x-3 gap-y-1 mt-1">
+          {cells.map((color, i) => {
+            if (color === ERASER) return null
+            const col = (i % cols) + 1
+            const row = Math.floor(i / cols) + 1
+            return (
+              <span key={i} className="flex items-center gap-1">
+                <span
+                  className="inline-block w-3 h-3 rounded-sm border border-gray-300 shrink-0"
+                  style={{ backgroundColor: color }}
+                />
+                {col},{row} {COLOR_NAMES[color] ?? color}
+              </span>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
