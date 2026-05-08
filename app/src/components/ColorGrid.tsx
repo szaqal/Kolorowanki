@@ -37,6 +37,29 @@ export default function ColorGrid() {
 
   const clear = () => setCells(makeGrid(rows, cols))
 
+  const [downloading, setDownloading] = useState(false)
+
+  const downloadPdf = async () => {
+    setDownloading(true)
+    try {
+      const res = await fetch('/api/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cells, rows, cols }),
+      })
+      if (!res.ok) throw new Error('PDF generation failed')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'kolorowanki.pdf'
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   return (
     <div
       className="flex flex-col gap-4"
@@ -95,6 +118,14 @@ export default function ColorGrid() {
           className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
         >
           Print
+        </button>
+
+        <button
+          onClick={downloadPdf}
+          disabled={downloading}
+          className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {downloading ? 'Generating…' : 'Download PDF'}
         </button>
       </div>
 
