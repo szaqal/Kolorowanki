@@ -13,6 +13,12 @@ const COLOR_NAMES: Record<string, string> = {
   '#6366f1': 'indygo',
   '#78716c': 'szary',
   '#000000': 'czarny',
+  '#b45309': 'brązowy',
+  '#1e3a8a': 'granatowy',
+  '#0ea5e9': 'błękitny',
+  '#84cc16': 'limonkowy',
+  '#991b1b': 'bordowy',
+  '#374151': 'ciemnoszary',
 }
 
 const ERASER = '#ffffff'

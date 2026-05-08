@@ -6,6 +6,8 @@ const PALETTE = [
   '#ef4444', '#f97316', '#eab308', '#22c55e',
   '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6',
   '#f59e0b', '#6366f1', '#78716c', '#000000',
+  '#b45309', '#1e3a8a', '#0ea5e9', '#84cc16',
+  '#991b1b', '#374151',
 ]
 
 const ERASER = '#ffffff'
@@ -23,10 +25,33 @@ const COLOR_NAMES: Record<string, string> = {
   '#6366f1': 'indygo',
   '#78716c': 'szary',
   '#000000': 'czarny',
+  '#b45309': 'brązowy',
+  '#1e3a8a': 'granatowy',
+  '#0ea5e9': 'błękitny',
+  '#84cc16': 'limonkowy',
+  '#991b1b': 'bordowy',
+  '#374151': 'ciemnoszary',
 }
 
 function makeGrid(rows: number, cols: number) {
   return Array(rows * cols).fill(ERASER)
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16)
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+}
+
+const PALETTE_RGB = PALETTE.map(hex => ({ hex, rgb: hexToRgb(hex) }))
+
+function nearestPaletteColor(r: number, g: number, b: number): string {
+  let best = PALETTE_RGB[0].hex
+  let bestDist = Infinity
+  for (const { hex, rgb } of PALETTE_RGB) {
+    const dist = (r - rgb[0]) ** 2 + (g - rgb[1]) ** 2 + (b - rgb[2]) ** 2
+    if (dist < bestDist) { bestDist = dist; best = hex }
+  }
+  return best
 }
 
 export default function ColorGrid() {
@@ -53,6 +78,26 @@ export default function ColorGrid() {
   const clear = () => setCells(makeGrid(rows, cols))
 
   const [downloading, setDownloading] = useState(false)
+
+  const mapImage = (file: File) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = cols
+      canvas.height = rows
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, cols, rows)
+      const { data } = ctx.getImageData(0, 0, cols, rows)
+      setCells(Array.from({ length: rows * cols }, (_, i) => {
+        const a = data[i * 4 + 3]
+        if (a < 128) return ERASER
+        return nearestPaletteColor(data[i * 4], data[i * 4 + 1], data[i * 4 + 2])
+      }))
+      URL.revokeObjectURL(url)
+    }
+    img.src = url
+  }
 
   const downloadPdf = async () => {
     setDownloading(true)
@@ -81,7 +126,7 @@ export default function ColorGrid() {
       onMouseUp={() => setPainting(false)}
       onMouseLeave={() => setPainting(false)}
     >
-      <div className="no-print flex flex-wrap items-center gap-4">
+      <div className="no-print flex flex-wrap items-center gap-4 bg-white border border-[#e2ddd8] rounded-lg px-4 py-3">
         <div className="flex gap-1">
           {[...PALETTE, ERASER].map(color => (
             <button
@@ -98,7 +143,7 @@ export default function ColorGrid() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-gray-700">
+        <div className="flex items-center gap-2 text-sm text-[#5a5550]">
           <label htmlFor="rows">Rows</label>
           <input
             id="rows"
@@ -120,6 +165,16 @@ export default function ColorGrid() {
             className="w-16 border rounded px-2 py-1 text-center"
           />
         </div>
+
+        <label className="px-3 py-1 text-sm border rounded hover:bg-gray-100 transition-colors cursor-pointer">
+          Upload image
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) mapImage(f); e.target.value = '' }}
+          />
+        </label>
 
         <button
           onClick={clear}
@@ -145,7 +200,7 @@ export default function ColorGrid() {
       </div>
 
       <div
-        className="border border-gray-400 select-none w-full"
+        className="border border-[#c8c4be] rounded-sm select-none w-full bg-white"
         style={{ display: 'grid', gridTemplateColumns: `auto repeat(${cols}, 1fr)` }}
       >
         <div />
