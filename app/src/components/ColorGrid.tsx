@@ -131,16 +131,32 @@ export default function ColorGrid() {
 
       <div
         className="border border-gray-400 select-none w-full"
-        style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+        style={{ display: 'grid', gridTemplateColumns: `auto repeat(${cols}, 1fr)` }}
       >
-        {cells.map((color, i) => (
-          <div
-            key={i}
-            style={{ backgroundColor: color, aspectRatio: '1' }}
-            className="border border-gray-200 cursor-crosshair"
-            onMouseDown={() => { setPainting(true); paint(i) }}
-            onMouseEnter={() => { if (painting) paint(i) }}
-          />
+        <div />
+        {Array.from({ length: cols }, (_, c) => (
+          <div key={`ch-${c}`} className="text-center text-xs text-gray-400 py-0.5 leading-none">
+            {c + 1}
+          </div>
+        ))}
+        {Array.from({ length: rows }, (_, r) => (
+          <>
+            <div key={`rh-${r}`} className="flex items-center justify-end pr-1 text-xs text-gray-400 leading-none">
+              {r + 1}
+            </div>
+            {Array.from({ length: cols }, (_, c) => {
+              const i = r * cols + c
+              return (
+                <div
+                  key={i}
+                  style={{ backgroundColor: cells[i], aspectRatio: '1' }}
+                  className="border border-gray-200 cursor-crosshair"
+                  onMouseDown={() => { setPainting(true); paint(i) }}
+                  onMouseEnter={() => { if (painting) paint(i) }}
+                />
+              )
+            })}
+          </>
         ))}
       </div>
     </div>
