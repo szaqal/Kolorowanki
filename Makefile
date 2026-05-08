@@ -2,7 +2,7 @@
 
 APP_DIR := app
 
-.PHONY: help install dev build start lint typecheck test clean pdf-deps
+.PHONY: help install dev build start lint typecheck test clean pdf-deps docker-build docker-run
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -31,6 +31,12 @@ test: ## Run tests
 
 pdf-deps: ## Install Puppeteer browser (run once after install)
 	cd $(APP_DIR) && npx puppeteer browsers install chrome
+
+docker-build: ## Build the Docker image (tag: kolorowanki)
+	docker build -t kolorowanki .
+
+docker-run: ## Run the Docker image on port 3000
+	docker run --rm -p 3000:3000 kolorowanki
 
 clean: ## Remove build artifacts and node_modules
 	rm -rf $(APP_DIR)/.next $(APP_DIR)/node_modules
