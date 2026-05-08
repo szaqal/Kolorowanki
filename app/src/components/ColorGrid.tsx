@@ -37,6 +37,24 @@ function makeGrid(rows: number, cols: number) {
   return Array(rows * cols).fill(ERASER)
 }
 
+function toExpression(n: number, parity: 0 | 1): string {
+  if (n === 1) return parity === 0 ? '2-1' : '3-2'
+  const variant = (n + parity) % 3
+  if (variant === 0) {
+    const a = Math.ceil(n / 2)
+    return `${a}+${n - a}`
+  }
+  if (variant === 1) {
+    const k = (n % 5) + 1
+    return `${n + k}-${k}`
+  }
+  for (let a = 2; a * a <= n; a++) {
+    if (n % a === 0) return `${a}×${n / a}`
+  }
+  const a = Math.ceil(n / 2)
+  return `${a}+${n - a}`
+}
+
 function hexToRgb(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16)
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
@@ -78,6 +96,7 @@ export default function ColorGrid() {
   const clear = () => setCells(makeGrid(rows, cols))
 
   const [downloading, setDownloading] = useState(false)
+  const [expressionMode, setExpressionMode] = useState(false)
 
   const mapImage = (file: File) => {
     const img = new Image()
@@ -105,7 +124,7 @@ export default function ColorGrid() {
       const res = await fetch('/api/pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cells, rows, cols }),
+        body: JSON.stringify({ cells, rows, cols, expressionMode }),
       })
       if (!res.ok) throw new Error('PDF generation failed')
       const blob = await res.blob()
@@ -190,6 +209,16 @@ export default function ColorGrid() {
           Print
         </button>
 
+        <label className="flex items-center gap-1.5 text-sm text-[#5a5550] cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={expressionMode}
+            onChange={e => setExpressionMode(e.target.checked)}
+            className="w-4 h-4 accent-blue-600"
+          />
+          Wyrażenia
+        </label>
+
         <button
           onClick={downloadPdf}
           disabled={downloading}
@@ -235,13 +264,15 @@ export default function ColorGrid() {
             if (color === ERASER) return null
             const col = (i % cols) + 1
             const row = Math.floor(i / cols) + 1
+            const colLabel = expressionMode ? toExpression(col, 0) : String(col)
+            const rowLabel = expressionMode ? toExpression(row, 1) : String(row)
             return (
               <span key={i} className="flex items-center gap-1">
                 <span
                   className="inline-block w-3 h-3 rounded-sm border border-gray-300 shrink-0"
                   style={{ backgroundColor: color }}
                 />
-                {col},{row} {COLOR_NAMES[color] ?? color}
+                {colLabel},{rowLabel} {COLOR_NAMES[color] ?? color}
               </span>
             )
           })}

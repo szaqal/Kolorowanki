@@ -23,11 +23,30 @@ const COLOR_NAMES: Record<string, string> = {
 
 const ERASER = '#ffffff'
 
+function toExpression(n: number, parity: 0 | 1): string {
+  if (n === 1) return parity === 0 ? '2-1' : '3-2'
+  const variant = (n + parity) % 3
+  if (variant === 0) {
+    const a = Math.ceil(n / 2)
+    return `${a}+${n - a}`
+  }
+  if (variant === 1) {
+    const k = (n % 5) + 1
+    return `${n + k}-${k}`
+  }
+  for (let a = 2; a * a <= n; a++) {
+    if (n % a === 0) return `${a}×${n / a}`
+  }
+  const a = Math.ceil(n / 2)
+  return `${a}+${n - a}`
+}
+
 export async function POST(request: Request) {
-  const { cells, rows, cols } = await request.json() as {
+  const { cells, rows, cols, expressionMode } = await request.json() as {
     cells: string[]
     rows: number
     cols: number
+    expressionMode: boolean
   }
 
   const cellSize = Math.floor(Math.min(700 / cols, 700 / rows))
@@ -54,10 +73,12 @@ export async function POST(request: Request) {
       if (color === ERASER) return ''
       const col = (i % cols) + 1
       const row = Math.floor(i / cols) + 1
+      const colLabel = expressionMode ? toExpression(col, 0) : String(col)
+      const rowLabel = expressionMode ? toExpression(row, 1) : String(row)
       const name = COLOR_NAMES[color] ?? color
       return `<span style="display:inline-flex;align-items:center;gap:3px;margin-right:12px;white-space:nowrap;">` +
         `<span style="display:inline-block;width:10px;height:10px;background:${color};border:1px solid #d1d5db;border-radius:2px;"></span>` +
-        `${col},${row} ${name}</span>`
+        `${colLabel},${rowLabel} ${name}</span>`
     })
     .join('')
 
